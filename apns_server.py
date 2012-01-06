@@ -6,10 +6,6 @@ import logging
 import simplejson as json
 from lib.connection import APNSConn, FeedbackConn
 
-JAY = 'f1ad4885be359681f03758f849d71399fdbc6a7d6f89999b15714441e606757f'
-NATE = 'ddff5dfd79829a4dd61e13e193e5c55e6c640350382d7824d6abaa52cc89dbb4'
-NATE2 = '76b6188abe6087ce5febd9fbb2aa01ec63ad4674720e1ddb9d6ee957aa2c92a4'
-
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_int_argument(self, name, default=None):
