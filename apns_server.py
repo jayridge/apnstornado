@@ -32,6 +32,10 @@ class PushHandler(BaseHandler):
         sound = self.get_argument("sound", None)
         expiry = self.get_argument("expiry", None)
         extra = self.get_argument("extra", None)
+
+        if extra:
+            extra = json.loads(extra)
+
         resp = apns.push(token, alert, badge, sound, expiry, extra)
         self.api_response(resp)
 
