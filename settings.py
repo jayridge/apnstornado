@@ -9,15 +9,17 @@ options = {
         'feedback_host' : ( 'feedback.sandbox.push.apple.com', 2196 ),
         'memcached' : ['127.0.0.1:11211'],
         'apns_reconnect_lag' : 5,
-        'feedback_reconnect_lag' : 30
+        'feedback_enabled' : False,
+        'feedback_reconnect_lag' : 60
     }, 
     'prod' : {
         'certfile' : 'apns_production.pem',
         'apns_host' : ( 'gateway.push.apple.com', 2195 ),
         'feedback_host' : ( 'feedback.push.apple.com', 2196 ),
         'memcached' : ['127.0.0.1:11211'],
-        'apns_reconnect_lag' : 5,
-        'feedback_reconnect_lag' : 30
+        'apns_reconnect_lag' : 1,
+        'feedback_enabled' : False,
+        'feedback_reconnect_lag' : 60
     }
 }
 

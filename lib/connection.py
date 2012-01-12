@@ -10,6 +10,8 @@ from collections import deque
 from MemcachePool import mc
 from utils import *
 
+MAX_PAYLOAD_BYTES = 256
+
 class APNSConn():
     def __init__(self, host=None, certfile=None, loop=None):
         self.stats = {
@@ -48,6 +50,9 @@ class APNSConn():
         identifier = self.generation.value
         msg = create_message(token, alert=alert, badge=badge, sound=sound,
             identifier=identifier, expiry=expiry, extra=extra)
+        if len(msg) > MAX_PAYLOAD_BYTES:
+            raise ValueError, u"max payload(%d) exceeded: %d" % (MAX_PAYLOAD_BYTES, len(msg))
+
         self.write_queue.append(msg)
         self.recent.append(dict(identifier=identifier, token=token))
         self.ioloop.add_callback(self.push_one)
@@ -104,8 +109,11 @@ class APNSConn():
         '''
         logging.info('_on_close')
         self.stats['disconnects'] += 1
-        self.stream.close()
-        self.s.close()
+        try:
+            self.stream.close()
+            self.s.close()
+        except:
+            pass
         self.ioloop.add_timeout(time.time()+settings.get('apns_reconnect_lag'), self.connect)
 
 
@@ -134,6 +142,9 @@ class FeedbackConn():
 
     def _on_close(self, data):
         logging.info("disconnected %s:%d" % (self.host[0], self.host[1]))
-        self.stream.close()
-        self.s.close()
+        try:
+            self.stream.close()
+            self.s.close()
+        except:
+            pass
         self.ioloop.add_timeout(time.time()+settings.get('feedback_reconnect_lag'), self.connect)

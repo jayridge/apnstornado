@@ -1,3 +1,4 @@
+import sys
 import tornado.options
 import tornado.web
 from tornado.escape import utf8
@@ -15,7 +16,7 @@ class BaseHandler(tornado.web.RequestHandler):
         except (TypeError, ValueError):
             return default
 
-    def error(self, status_code, status_txt, data=None):
+    def error(self, status_code=500, status_txt=None, data=None):
         """write an api error in the appropriate response format"""
         self.api_response(status_code=status_code, status_txt=status_txt, data=data)
 
@@ -36,8 +37,18 @@ class PushHandler(BaseHandler):
         if extra:
             extra = json.loads(extra)
 
-        resp = apns.push(token, alert, badge, sound, expiry, extra)
-        self.api_response(resp)
+        status = 'ERROR'
+        code = 500
+        resp = {'queued':False, 'exception':None}
+        try:
+            resp['queued'] = apns.push(token, alert, badge, sound, expiry, extra)
+            if resp['queued']:
+                status = 'OK'
+                code = 200
+            self.api_response(resp, status_code=code, status_txt=status)
+        except Exception as e:
+            self.error(status_code=500, status_txt=status, data=str(e))
+            
 
 class StatsHandler(BaseHandler):
     def get(self):
@@ -49,7 +60,8 @@ if __name__ == "__main__":
 
     # the global apns
     apns = APNSConn()
-    feedback = FeedbackConn()
+    if settings.get('feedback_enabled'):
+        feedback = FeedbackConn()
 
     application = tornado.web.Application([
         (r"/push", PushHandler),
