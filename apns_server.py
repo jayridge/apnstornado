@@ -5,6 +5,7 @@ from tornado.escape import utf8
 import settings
 import logging
 import simplejson as json
+from lib.MemcachePool import mc
 from lib.connection import APNSConn, FeedbackConn
 
 
@@ -33,6 +34,7 @@ class PushHandler(BaseHandler):
         sound = self.get_argument("sound", None)
         expiry = self.get_argument("expiry", None)
         extra = self.get_argument("extra", None)
+        timestamp = self.get_argument("timestamp", None)
 
         if extra:
             extra = json.loads(extra)
@@ -41,7 +43,7 @@ class PushHandler(BaseHandler):
         code = 500
         resp = {'queued':False, 'exception':None}
         try:
-            resp['queued'] = apns.push(token, alert, badge, sound, expiry, extra)
+            resp['queued'] = apns.push(token, alert, badge, sound, expiry, extra, timestamp)
             if resp['queued']:
                 status = 'OK'
                 code = 200
@@ -50,6 +52,16 @@ class PushHandler(BaseHandler):
             self.error(status_code=500, status_txt=status, data=str(e))
             
 
+class FlushHandler(BaseHandler):
+    def get(self):
+        token = utf8(self.get_argument("token"))
+        try:
+            mc.delete(token)
+            self.api_response(dict(token=token))
+        except Exception as e:
+            self.error(status_code=500, status_txt='ERROR', data=str(e))
+
+
 class StatsHandler(BaseHandler):
     def get(self):
         self.api_response(apns.get_stats())
@@ -57,6 +69,7 @@ class StatsHandler(BaseHandler):
 if __name__ == "__main__":
     tornado.options.define("port", default=8888, help="Listen on port", type=int)
     tornado.options.parse_command_line()
+    logging.getLogger().setLevel(settings.get('logging_level'))
 
     # the global apns
     apns = APNSConn()
@@ -66,6 +79,7 @@ if __name__ == "__main__":
     application = tornado.web.Application([
         (r"/push", PushHandler),
         (r"/stats", StatsHandler),
+        (r"/flush", FlushHandler),
     ])
     application.listen(tornado.options.options.port)
     tornado.ioloop.IOLoop.instance().start()
