@@ -30,7 +30,7 @@ class PushHandler(BaseHandler):
     def get(self):
         token = utf8(self.get_argument("token"))
         alert = self.get_argument("alert", None)
-        badge = self.get_argument("badge", None)
+        badge = self.get_int_argument("badge", None)
         sound = self.get_argument("sound", None)
         expiry = self.get_argument("expiry", None)
         extra = self.get_argument("extra", None)
@@ -49,6 +49,7 @@ class PushHandler(BaseHandler):
                 code = 200
             self.api_response(resp, status_code=code, status_txt=status)
         except Exception as e:
+            logging.error("push failed", exc_info=e)
             self.error(status_code=500, status_txt=status, data=str(e))
             
 
